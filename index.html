@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les Devinettes de Rose 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #FF6B9D;
+    --rose-light: #FFB3D1;
+    --rose-dark: #E8457A;
+    --cream: #FFF5F8;
+    --dark: #2D1B25;
+    --card: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BUBBLES BG ── */
+  .bubbles {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,179,209,.35), rgba(255,107,157,.1));
+    animation: floatBubble linear infinite;
+  }
+  @keyframes floatBubble {
+    0%   { transform: translateY(110vh) scale(0.8); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: .6; }
+    100% { transform: translateY(-15vh) scale(1.1); opacity: 0; }
+  }
+
+  /* ── HOME SCREEN ── */
+  #screen-home {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 20px; text-align: center;
+  }
+  .logo-wrap {
+    font-size: 72px; margin-bottom: 6px;
+    animation: logoBounce 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 6px 18px rgba(255,107,157,.45));
+  }
+  @keyframes logoBounce {
+    0%,100% { transform: translateY(0) rotate(-3deg); }
+    50%     { transform: translateY(-10px) rotate(3deg); }
+  }
+  .app-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(2rem, 8vw, 3.4rem);
+    font-weight: 900;
+    color: var(--rose-dark);
+    line-height: 1;
+    text-shadow: 0 3px 0 rgba(255,107,157,.25);
+    margin-bottom: 6px;
+  }
+  .app-sub {
+    font-size: .95rem; color: #B06080; font-weight: 700; margin-bottom: 36px;
+    letter-spacing: .3px;
+  }
+  .age-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    width: 100%; max-width: 380px; margin-bottom: 28px;
+  }
+  .age-btn {
+    background: white;
+    border: 2.5px solid rgba(255,107,157,.25);
+    border-radius: 22px;
+    padding: 22px 12px;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    box-shadow: 0 4px 18px rgba(255,107,157,.12);
+  }
+  .age-btn:hover, .age-btn:active {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--rose);
+    box-shadow: 0 10px 30px rgba(255,107,157,.28);
+  }
+  .age-btn .big-emoji { font-size: 36px; }
+  .age-btn .age-label {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1rem; font-weight: 900; color: var(--dark);
+  }
+  .age-btn .age-count { font-size: .72rem; color: #C090A8; font-weight: 700; }
+  .hint { color: #D0A0B5; font-size: .78rem; font-weight: 600; }
+
+  /* ── PLAYER SCREEN ── */
+  #screen-player {
+    display: none; flex-direction: column; min-height: 100vh;
+    position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
+  }
+
+  /* Header */
+  .player-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    background: white;
+    border-bottom: 2px solid rgba(255,107,157,.1);
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 2px 12px rgba(255,107,157,.08);
+  }
+  .btn-back {
+    background: var(--cream); border: 1.5px solid rgba(255,107,157,.25);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer;
+    font-family: 'Nunito',sans-serif; font-weight: 700; font-size: .82rem; color: #B06080;
+    transition: all .15s;
+  }
+  .btn-back:hover { background: rgba(255,107,157,.1); }
+  .header-mid { display: flex; align-items: center; gap: 7px; }
+  .header-emoji { font-size: 1.3rem; }
+  .header-label { font-family:'Baloo 2',cursive; font-weight:800; font-size:.92rem; color:var(--dark); }
+  .score-pill {
+    background: rgba(255,107,157,.1); border: 1.5px solid rgba(255,107,157,.3);
+    border-radius: 10px; padding: 7px 13px;
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:.88rem; color:var(--rose-dark);
+  }
+
+  /* Category chips */
+  .cat-row {
+    display: flex; gap: 8px; padding: 10px 18px; overflow-x: auto; scrollbar-width: none;
+    background: white; border-bottom: 1px solid rgba(255,107,157,.08);
+  }
+  .cat-row::-webkit-scrollbar { display: none; }
+  .cat-chip {
+    background: var(--cream); border: 1.5px solid rgba(255,107,157,.2);
+    border-radius: 99px; padding: 5px 14px; cursor: pointer; white-space: nowrap;
+    font-family:'Nunito',sans-serif; font-weight:700; font-size:.76rem; color:#B06080;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .cat-chip.active {
+    background: var(--rose); border-color: var(--rose); color: white;
+  }
+  .cat-chip:hover:not(.active) { background: rgba(255,107,157,.1); }
+
+  /* Progress */
+  .progress-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 18px 4px;
+    background: white;
+  }
+  .progress-bar-wrap { flex: 1; height: 5px; background: rgba(255,107,157,.12); border-radius: 99px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--rose-light), var(--rose)); border-radius: 99px; transition: width .4s ease; }
+  .progress-text { font-size: .72rem; color: #C090A8; font-weight: 700; white-space: nowrap; }
+
+  /* Card area */
+  .card-area {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 14px 18px 28px; gap: 14px;
+    background: var(--cream);
+  }
+
+  /* Emoji */
+  .q-emoji-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; }
+  .q-cat-pill {
+    background: rgba(255,107,157,.12); border: 1px solid rgba(255,107,157,.25);
+    border-radius: 99px; padding: 4px 14px;
+    font-size: .7rem; font-weight: 800; color: var(--rose-dark); letter-spacing: .5px;
+  }
+  .q-emoji {
+    font-size: 72px; line-height: 1;
+    filter: drop-shadow(0 6px 18px rgba(255,107,157,.4));
+    transition: transform .3s;
+  }
+
+  /* Question box */
+  .q-box {
+    background: white; border: 2px solid rgba(255,107,157,.15);
+    border-radius: 22px; padding: 22px 20px; text-align: center;
+    min-height: 90px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(255,107,157,.08);
+  }
+  .q-text { font-size: clamp(.95rem, 3.2vw, 1.15rem); font-weight: 700; color: var(--dark); line-height: 1.55; }
+  .q-idle { font-size: 1rem; font-weight: 700; color: #D0A8BE; }
+
+  /* Timer */
+  .timer-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .timer-svg { transform: rotate(-90deg); }
+  .timer-text-wrap { position: relative; height: 0; display: flex; justify-content: center; }
+  .timer-number {
+    position: absolute; top: -54px;
+    font-family:'Baloo 2',cursive; font-weight:900; font-size:1.9rem; color: var(--rose-dark);
+    transition: color .3s;
+  }
+  .timer-label { font-size: .72rem; color: #C090A8; font-weight: 600; margin-top: 8px; }
+
+  /* Dots loading */
+  .dots-wrap { display: flex; justify-content: center; gap: 9px; padding: 12px 0; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--rose); animation: dotPop 1s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes dotPop { 0%,100%{transform:scale(.5);opacity:.3} 50%{transform:scale(1);opacity:1} }
+
+  /* Answer box */
+  .answer-box {
+    background: linear-gradient(135deg, rgba(255,107,157,.1), rgba(255,179,209,.08));
+    border: 2px solid rgba(255,107,157,.35);
+    border-radius: 20px; padding: 20px; text-align: center;
+    animation: revealPop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes revealPop { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+  .answer-label { color: var(--rose); font-size: .7rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+  .answer-text { color: var(--dark); font-size: clamp(1rem,3.5vw,1.3rem); font-weight: 900; line-height: 1.45; }
+  .answer-bonus { margin-top: 10px; color: var(--rose-dark); font-weight: 700; font-size: .82rem; }
+
+  /* Stats mini */
+  .stats-mini { display: flex; justify-content: center; gap: 24px; }
+  .stat-item { text-align: center; }
+  .stat-val { font-family:'Baloo 2',cursive; font-weight:900; font-size:1.4rem; color:var(--rose-dark); }
+  .stat-lbl { font-size:.7rem; color:#C090A8; font-weight:700; }
+  .stat-divider { width:1px; background:rgba(255,107,157,.15); }
+
+  /* Buttons */
+  .spacer { flex: 1; }
+  .btn-play {
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    border: none; border-radius: 18px; padding: 18px;
+    color: white; font-family:'Baloo 2',cursive; font-weight:900; font-size:1.1rem;
+    cursor: pointer; width: 100%;
+    box-shadow: 0 8px 28px rgba(255,107,157,.45);
+    transition: all .2s; letter-spacing: .3px;
+  }
+  .btn-play:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(255,107,157,.55); }
+  .btn-play:active { transform: scale(.97); }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-got {
+    flex: 1; background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    border: none; border-radius: 15px; padding: 16px;
+    color: white; font-family:'Baloo 2',cursive; font-weight:900; font-size:.95rem;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,157,.4); transition: all .2s;
+  }
+  .btn-got:hover { transform: translateY(-2px); }
+  .btn-got:active { transform: scale(.96); }
+  .btn-next-sm {
+    background: white; border: 2px solid rgba(255,107,157,.25);
+    border-radius: 15px; padding: 16px 20px;
+    color: #C090A8; font-family:'Baloo 2',cursive; font-weight:800; font-size:1.1rem;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-next-sm:hover { border-color: var(--rose); color: var(--rose); }
+  .btn-next {
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    border: none; border-radius: 15px; padding: 16px; width: 100%;
+    color: white; font-family:'Baloo 2',cursive; font-weight:900; font-size:.95rem;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,157,.4); transition: all .2s;
+  }
+  .btn-next:active { transform: scale(.97); }
+  .btn-reveal {
+    background: white; border: 2px solid rgba(255,107,157,.2);
+    border-radius: 14px; padding: 13px; width: 100%;
+    color: #C090A8; font-family:'Nunito',sans-serif; font-weight:700; font-size:.88rem;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-reveal:hover { border-color: var(--rose); color: var(--rose); }
+
+  /* Confetti burst */
+  .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden; }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px; border-radius: 2px;
+    animation: confettiFall 1.8s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translateY(-10px) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translateY(110vh) rotate(720deg) scale(.5); }
+  }
+
+  /* Hidden utility */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Floating bubbles -->
+<div class="bubbles" id="bubbles"></div>
+
+<!-- ══════════════ HOME SCREEN ══════════════ -->
+<div id="screen-home">
+  <div class="logo-wrap">🌸</div>
+  <h1 class="app-title">Les Devinettes<br>de Rose</h1>
+  <p class="app-sub">Devinettes audio pour les enfants du Québec 🍁</p>
+
+  <div class="age-grid" id="age-grid"></div>
+
+  <p class="hint">🎧 Active le son pour entendre les devinettes</p>
+</div>
+
+<!-- ══════════════ PLAYER SCREEN ══════════════ -->
+<div id="screen-player">
+  <!-- Header -->
+  <div class="player-header">
+    <button class="btn-back" onclick="goHome()">← Retour</button>
+    <div class="header-mid">
+      <span class="header-emoji" id="hdr-emoji"></span>
+      <span class="header-label" id="hdr-label"></span>
+    </div>
+    <div class="score-pill">⭐ <span id="score-display">0</span></div>
+  </div>
+
+  <!-- Categories -->
+  <div class="cat-row" id="cat-row"></div>
+
+  <!-- Progress -->
+  <div class="progress-row">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="prog-bar" style="width:0%"></div></div>
+    <span class="progress-text" id="prog-text">1/1</span>
+  </div>
+
+  <!-- Card area -->
+  <div class="card-area">
+    <!-- Category pill + emoji -->
+    <div class="q-emoji-wrap">
+      <div class="q-cat-pill" id="q-cat">Animaux</div>
+      <div class="q-emoji" id="q-emoji">🌸</div>
+    </div>
+
+    <!-- Question -->
+    <div class="q-box">
+      <p class="q-idle" id="q-idle">Appuie sur ▶ pour jouer !</p>
+      <p class="q-text hidden" id="q-text"></p>
+    </div>
+
+    <!-- Timer (hidden by default) -->
+    <div class="timer-wrap hidden" id="timer-wrap">
+      <svg class="timer-svg" width="90" height="90">
+        <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,107,157,.15)" stroke-width="6"/>
+        <circle id="timer-ring" cx="45" cy="45" r="38" fill="none"
+          stroke="#FF6B9D" stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="238 238"
+          style="transition:stroke-dasharray .9s linear,stroke .3s"/>
+      </svg>
+      <div class="timer-text-wrap">
+        <span class="timer-number" id="timer-number">10</span>
+      </div>
+      <div class="timer-label" style="margin-top:50px">secondes pour réfléchir…</div>
+    </div>
+
+    <!-- Loading dots (hidden) -->
+    <div class="dots-wrap hidden" id="dots-wrap">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <!-- Answer (hidden) -->
+    <div class="answer-box hidden" id="answer-box">
+      <div class="answer-label">✨ La réponse</div>
+      <div class="answer-text" id="answer-text"></div>
+      <div class="answer-bonus hidden" id="answer-bonus">+10 points ! 🎉</div>
+    </div>
+
+    <!-- Stats mini (hidden) -->
+    <div class="stats-mini hidden" id="stats-mini">
+      <div class="stat-item">
+        <div class="stat-val" id="stat-right">0</div>
+        <div class="stat-lbl">trouvées</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-pts">0</div>
+        <div class="stat-lbl">points</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- Action buttons -->
+    <div id="btn-area"></div>
+  </div>
+</div>
+
+<!-- Confetti container -->
+<div class="confetti-wrap hidden" id="confetti-wrap"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  DONNÉES — 120+ devinettes
+// ══════════════════════════════════════════
+const LIBRARY = {
+  "2-3": {
+    label:"2–3 ans", emoji:"🍼", color:"#FF7EB3",
+    devinettes:[
+      {cat:"Animaux",q:"Je fais « Meuh ! » et je donne du lait. Qui suis-je ?",r:"La vache !",e:"🐄"},
+      {cat:"Animaux",q:"Je fais « Ouaf ouaf ! » et j'adore les câlins. Qui suis-je ?",r:"Le chien !",e:"🐶"},
+      {cat:"Animaux",q:"Je fais « Miaou » et je dors beaucoup. Qui suis-je ?",r:"Le chat !",e:"🐱"},
+      {cat:"Animaux",q:"Je suis orange avec des rayures noires et je rugis fort. Qui suis-je ?",r:"Le tigre !",e:"🐯"},
+      {cat:"Animaux",q:"Je suis gros, gris, et j'ai une longue trompe. Qui suis-je ?",r:"L'éléphant !",e:"🐘"},
+      {cat:"Animaux",q:"Je saute très haut et j'ai un bébé dans ma poche. Qui suis-je ?",r:"Le kangourou !",e:"🦘"},
+      {cat:"Animaux",q:"Je suis tout blanc et je vis dans la neige. Je pêche des poissons. Qui suis-je ?",r:"L'ours polaire !",e:"🐻‍❄️"},
+      {cat:"Animaux",q:"Je suis jaune et noir, je fais du miel et je bourdonne. Qui suis-je ?",r:"L'abeille !",e:"🐝"},
+      {cat:"Animaux",q:"J'ai une carapace sur le dos et je marche très lentement. Qui suis-je ?",r:"La tortue !",e:"🐢"},
+      {cat:"Animaux",q:"Je suis tout petit, j'ai des grandes oreilles et j'adore les carottes. Qui suis-je ?",r:"Le lapin !",e:"🐰"},
+      {cat:"Animaux",q:"Je vis à la ferme, je fais « Coin coin » et je nage. Qui suis-je ?",r:"Le canard !",e:"🦆"},
+      {cat:"Animaux",q:"Je suis rouge avec des points noirs. Je suis un tout petit insecte. Qui suis-je ?",r:"La coccinelle !",e:"🐞"},
+      {cat:"Sons",q:"Quel animal fait « Cocorico » le matin ?",r:"Le coq !",e:"🐓"},
+      {cat:"Sons",q:"Quel animal fait « Hi-han » ?",r:"L'âne !",e:"🫏"},
+      {cat:"Sons",q:"Quel animal fait « Bêê bêê » ?",r:"Le mouton !",e:"🐑"},
+      {cat:"Sons",q:"Quel animal fait « Groin groin » ?",r:"Le cochon !",e:"🐷"},
+      {cat:"Sons",q:"Quel animal fait « Cui cui » dans les arbres ?",r:"L'oiseau !",e:"🐦"},
+      {cat:"Sons",q:"Qu'est-ce qui fait « Vroom vroom » sur la route ?",r:"Une voiture !",e:"🚗"},
+      {cat:"Sons",q:"Qu'est-ce qui fait « Plouf » quand on saute dedans ?",r:"La piscine — l'eau !",e:"💦"},
+      {cat:"Couleurs",q:"Le ciel est de quelle couleur quand il fait beau ?",r:"Bleu !",e:"🔵"},
+      {cat:"Couleurs",q:"Les bananes sont de quelle couleur ?",r:"Jaune !",e:"🍌"},
+      {cat:"Couleurs",q:"Les fraises sont de quelle couleur ?",r:"Rouge !",e:"🍓"},
+      {cat:"Couleurs",q:"L'herbe est de quelle couleur ?",r:"Verte !",e:"🌿"},
+      {cat:"Couleurs",q:"Les nuages sont de quelle couleur ?",r:"Blancs !",e:"☁️"},
+      {cat:"Couleurs",q:"Les carottes sont de quelle couleur ?",r:"Orange !",e:"🥕"},
+      {cat:"Couleurs",q:"Le chocolat est de quelle couleur ?",r:"Brun — marron !",e:"🍫"},
+      {cat:"Objets",q:"Je sers à dormir, je suis moelleux et douillet. Qu'est-ce que je suis ?",r:"Un lit !",e:"🛏️"},
+      {cat:"Objets",q:"J'ai deux roues et les enfants adorent me conduire. Qu'est-ce que je suis ?",r:"Un vélo !",e:"🚲"},
+      {cat:"Objets",q:"On me met sur la tête quand il pleut pour rester sec. Qu'est-ce que je suis ?",r:"Un parapluie !",e:"☂️"},
+      {cat:"Objets",q:"Je suis rond, on me lance et on me rattrape. Qu'est-ce que je suis ?",r:"Un ballon !",e:"⚽"},
+      {cat:"Objets",q:"Je sers à manger la soupe. Qu'est-ce que je suis ?",r:"Une cuillère !",e:"🥄"},
+      {cat:"Objets",q:"On me porte aux pieds pour aller dehors. Qu'est-ce que je suis ?",r:"Des souliers !",e:"👟"},
+      {cat:"Objets",q:"Je sers à te brosser les dents chaque matin. Qu'est-ce que je suis ?",r:"Une brosse à dents !",e:"🪥"},
+    ]
+  },
+  "4-5": {
+    label:"4–5 ans", emoji:"🌟", color:"#FF9A3C",
+    devinettes:[
+      {cat:"Animaux",q:"J'ai un très long cou et je mange des feuilles tout en haut des arbres. Qui suis-je ?",r:"La girafe !",e:"🦒"},
+      {cat:"Animaux",q:"Je suis le roi de la jungle, j'ai une grande crinière dorée. Qui suis-je ?",r:"Le lion !",e:"🦁"},
+      {cat:"Animaux",q:"Je vis dans les arbres, je mange des bananes et j'imite les humains. Qui suis-je ?",r:"Le singe !",e:"🐒"},
+      {cat:"Animaux",q:"Je suis un grand oiseau qui peut parler et qui est souvent vert. Qui suis-je ?",r:"Le perroquet !",e:"🦜"},
+      {cat:"Animaux",q:"Je suis l'animal marin le plus grand du monde. Je chante sous l'eau. Qui suis-je ?",r:"La baleine !",e:"🐋"},
+      {cat:"Animaux",q:"J'ai une toile, huit pattes et j'attrape des mouches. Qui suis-je ?",r:"L'araignée !",e:"🕷️"},
+      {cat:"Animaux",q:"Je suis blanc l'hiver pour me cacher dans la neige au Québec. Qui suis-je ?",r:"Le lièvre d'Amérique !",e:"🐇"},
+      {cat:"Animaux",q:"Je suis un insecte coloré qui vole de fleur en fleur. Qui suis-je ?",r:"Le papillon !",e:"🦋"},
+      {cat:"Animaux",q:"Je suis un gros ours brun qui dort tout l'hiver. Qui suis-je ?",r:"L'ours brun !",e:"🐻"},
+      {cat:"Animaux",q:"J'ai des plumes, je chante la nuit et je tourne la tête à 270 degrés. Qui suis-je ?",r:"La chouette — le hibou !",e:"🦉"},
+      {cat:"Nature",q:"Quand il pleut et qu'il y a du soleil, qu'est-ce qu'on voit dans le ciel ?",r:"Un arc-en-ciel !",e:"🌈"},
+      {cat:"Nature",q:"Je tombe du ciel en hiver au Québec, je suis blanc et froid. Qu'est-ce que je suis ?",r:"La neige !",e:"❄️"},
+      {cat:"Nature",q:"Je me lève à l'est le matin et je me couche à l'ouest le soir. Qui suis-je ?",r:"Le soleil !",e:"☀️"},
+      {cat:"Nature",q:"On peut me voir la nuit, je brille et je change de forme chaque semaine. Qui suis-je ?",r:"La lune !",e:"🌙"},
+      {cat:"Nature",q:"Je suis un arbre du Québec dont la sève sert à faire du sirop. Quel arbre suis-je ?",r:"L'érable !",e:"🍁"},
+      {cat:"Nature",q:"Je pousse dans la terre, j'ai des feuilles vertes et des racines. Qu'est-ce que je suis ?",r:"Une plante !",e:"🌱"},
+      {cat:"Aliments",q:"Je suis fait avec du sirop d'érable et on me mange sur de la neige. Qu'est-ce que je suis ?",r:"La tire d'érable !",e:"🍁"},
+      {cat:"Aliments",q:"Je suis rouge ou vert, croquant, et on fait du jus avec moi. Qu'est-ce que je suis ?",r:"Une pomme !",e:"🍎"},
+      {cat:"Aliments",q:"Je suis orange, long et pointu. Les lapins adorent me croquer. Qu'est-ce que je suis ?",r:"Une carotte !",e:"🥕"},
+      {cat:"Aliments",q:"Je suis un plat québécois avec des frites, du fromage en grains et de la sauce brune. Qu'est-ce que je suis ?",r:"La poutine !",e:"🍟"},
+      {cat:"Aliments",q:"Je suis sucrée, ronde, avec des bougies le jour d'anniversaire. Qu'est-ce que je suis ?",r:"Un gâteau !",e:"🎂"},
+      {cat:"Aliments",q:"Je suis un fruit orange qu'on sculpte pour l'Halloween. Qu'est-ce que je suis ?",r:"Une citrouille !",e:"🎃"},
+      {cat:"Logique",q:"Si j'ai 2 pommes et que je t'en donne 1, combien j'en ai encore ?",r:"1 pomme !",e:"🍎"},
+      {cat:"Logique",q:"Le matin on déjeune, à midi on dîne, et le soir on… quoi ?",r:"On soupe !",e:"🍽️"},
+      {cat:"Logique",q:"Qu'est-ce qui vient après lundi ?",r:"Mardi !",e:"📅"},
+      {cat:"Logique",q:"Si tu as 3 bonbons et que tu en manges 1, combien il t'en reste ?",r:"2 bonbons !",e:"🍬"},
+      {cat:"Logique",q:"Je suis le contraire de grand. Qu'est-ce que je suis ?",r:"Petit !",e:"🔡"},
+      {cat:"Émotions",q:"Quand on reçoit un beau cadeau, on est… comment ?",r:"Content ou contente !",e:"😄"},
+      {cat:"Émotions",q:"Quand on partage ses jouets avec un ami, l'ami se sent comment ?",r:"Heureux — content !",e:"😊"},
+      {cat:"Émotions",q:"Quand on a peur dans le noir, on ressent quoi ?",r:"De la peur !",e:"😨"},
+    ]
+  },
+  "6-7": {
+    label:"6–7 ans", emoji:"🚀", color:"#26C99E",
+    devinettes:[
+      {cat:"Science",q:"Je suis une boule de feu géante. Sans moi, rien ne vivrait sur Terre. Qui suis-je ?",r:"Le Soleil !",e:"☀️"},
+      {cat:"Science",q:"Qu'est-ce qui attire les objets vers le sol quand on les lâche ?",r:"La gravité !",e:"🍎"},
+      {cat:"Science",q:"Pourquoi le ciel est-il bleu ?",r:"À cause de la lumière du soleil qui se disperse dans l'air !",e:"🔵"},
+      {cat:"Science",q:"Quelle partie de la plante absorbe l'eau dans le sol ?",r:"Les racines !",e:"🌿"},
+      {cat:"Science",q:"D'où vient la pluie ?",r:"Des nuages — l'eau s'évapore, monte dans les nuages et retombe en pluie !",e:"🌧️"},
+      {cat:"Science",q:"Combien y a-t-il de saisons dans une année ?",r:"4 saisons !",e:"🍂"},
+      {cat:"Science",q:"Que se passe-t-il quand on mélange du rouge et du bleu ?",r:"On obtient du violet !",e:"🎨"},
+      {cat:"Science",q:"Les plantes ont besoin d'eau, de lumière, et de quoi d'autre pour pousser ?",r:"De la terre !",e:"🌱"},
+      {cat:"Géographie",q:"Je suis la plus grande province du Canada. Mon emblème est une feuille d'érable. Qui suis-je ?",r:"Le Québec !",e:"🍁"},
+      {cat:"Géographie",q:"Je suis le plus grand fleuve qui traverse le Québec. Les baleines viennent me visiter. Qui suis-je ?",r:"Le Saint-Laurent !",e:"🌊"},
+      {cat:"Géographie",q:"Je suis la ville la plus peuplée du Québec, avec une montagne en son centre. Quelle ville suis-je ?",r:"Montréal !",e:"🏙️"},
+      {cat:"Géographie",q:"Je suis la capitale du Québec, entourée de fortifications historiques. Quelle ville suis-je ?",r:"Québec !",e:"🏰"},
+      {cat:"Géographie",q:"Quel est le pays voisin du Canada au sud ?",r:"Les États-Unis !",e:"🌎"},
+      {cat:"Géographie",q:"Quelle est la capitale du Canada ?",r:"Ottawa !",e:"🏛️"},
+      {cat:"Animaux QC",q:"Je suis le plus grand cervidé du Québec, j'ai de grands bois et je vis dans la forêt. Qui suis-je ?",r:"L'orignal !",e:"🫎"},
+      {cat:"Animaux QC",q:"Je suis le symbole officiel du Québec. Je suis un hibou blanc. Qui suis-je ?",r:"Le harfang des neiges !",e:"🦉"},
+      {cat:"Animaux QC",q:"Je suis un rongeur bâtisseur de barrages dans les rivières. Je suis aussi sur la pièce de 5 cents. Qui suis-je ?",r:"Le castor !",e:"🦫"},
+      {cat:"Animaux QC",q:"Je suis noir avec une bande blanche sur le dos et je sens très mauvais. Qui suis-je ?",r:"La mouffette !",e:"🦨"},
+      {cat:"Animaux QC",q:"Je suis sur la pièce d'un dollar canadien. Je plonge sous l'eau pour pêcher. Qui suis-je ?",r:"Le huard !",e:"🐦"},
+      {cat:"Animaux QC",q:"Je suis un grand mammifère marin blanc qu'on voit dans le Saint-Laurent. Qui suis-je ?",r:"Le béluga !",e:"🐋"},
+      {cat:"Logique",q:"Plus je sèche, plus je mouille. Qu'est-ce que je suis ?",r:"Une serviette !",e:"🏊"},
+      {cat:"Logique",q:"J'ai des dents mais je ne mords jamais. Qu'est-ce que je suis ?",r:"Un peigne !",e:"💇"},
+      {cat:"Logique",q:"Je cours sans jamais m'arrêter, mais je n'ai pas de jambes. Qui suis-je ?",r:"Le temps !",e:"⏰"},
+      {cat:"Logique",q:"Je suis toujours là quand tu te regardes, mais tu ne peux jamais me toucher. Qu'est-ce que je suis ?",r:"Ton reflet dans le miroir !",e:"🪞"},
+      {cat:"Logique",q:"J'ai une tête mais pas de cerveau, une queue mais pas de corps. Qu'est-ce que je suis ?",r:"Une pièce de monnaie !",e:"🪙"},
+      {cat:"Culture QC",q:"Quelle fête québécoise célèbre le 24 juin avec des feux de joie ?",r:"La Fête nationale du Québec !",e:"🎆"},
+      {cat:"Culture QC",q:"Quel festival célèbre l'hiver à Québec avec un bonhomme de neige géant ?",r:"Le Carnaval de Québec !",e:"⛄"},
+      {cat:"Culture QC",q:"Comment appelle-t-on l'endroit où on fait bouillir la sève d'érable au printemps ?",r:"La cabane à sucre !",e:"🍁"},
+      {cat:"Culture QC",q:"Quel sport d'hiver est le plus populaire au Québec, joué sur une surface glacée ?",r:"Le hockey !",e:"🏒"},
+      {cat:"Culture QC",q:"Comment appelle-t-on le petit-déjeuner au Québec ?",r:"Le déjeuner !",e:"🍳"},
+    ]
+  },
+  "8-10": {
+    label:"8–10 ans", emoji:"🧠", color:"#7C6AF7",
+    devinettes:[
+      {cat:"Science",q:"Combien de planètes y a-t-il dans notre système solaire ?",r:"8 planètes : Mercure, Vénus, Terre, Mars, Jupiter, Saturne, Uranus et Neptune !",e:"🪐"},
+      {cat:"Science",q:"Quelle est la formule chimique de l'eau ?",r:"H₂O — deux atomes d'hydrogène et un d'oxygène !",e:"💧"},
+      {cat:"Science",q:"Quelle planète est connue pour ses anneaux spectaculaires ?",r:"Saturne !",e:"🪐"},
+      {cat:"Science",q:"Qu'est-ce que la photosynthèse ?",r:"Le processus par lequel les plantes transforment la lumière du soleil en nourriture !",e:"🌿"},
+      {cat:"Science",q:"Quel gaz les humains respirent-ils pour vivre ?",r:"L'oxygène !",e:"💨"},
+      {cat:"Science",q:"Qu'est-ce qui cause les éclairs lors d'un orage ?",r:"De l'électricité statique qui se décharge entre les nuages et le sol !",e:"⚡"},
+      {cat:"Science",q:"Combien d'os y a-t-il dans le corps humain adulte ?",r:"206 os !",e:"🦴"},
+      {cat:"Science",q:"Quel organe pompe le sang dans notre corps ?",r:"Le cœur !",e:"❤️"},
+      {cat:"Science",q:"Comment s'appelle la couche qui protège la Terre des rayons ultraviolets ?",r:"La couche d'ozone !",e:"🌍"},
+      {cat:"Histoire QC",q:"Qui est l'explorateur français qui a fondé la ville de Québec en 1608 ?",r:"Samuel de Champlain !",e:"⚓"},
+      {cat:"Histoire QC",q:"Comment s'appellent les peuples qui vivaient au Québec bien avant l'arrivée des Européens ?",r:"Les Premières Nations !",e:"🦅"},
+      {cat:"Histoire QC",q:"En quelle année le Canada est-il devenu un pays indépendant ?",r:"En 1867 !",e:"🍁"},
+      {cat:"Histoire QC",q:"Qu'est-ce que la Loi 101 au Québec ?",r:"Une loi qui protège et renforce le français comme langue officielle au Québec !",e:"📜"},
+      {cat:"Histoire QC",q:"En quelle année a eu lieu l'Expo 67 à Montréal ?",r:"En 1967 !",e:"🌍"},
+      {cat:"Histoire QC",q:"Quel fleuve Jacques Cartier a-t-il remonté lors de son voyage de 1534 ?",r:"Le Saint-Laurent !",e:"🌊"},
+      {cat:"Logique avancée",q:"Je suis toujours devant toi, mais on ne peut jamais m'attraper. Qui suis-je ?",r:"L'avenir !",e:"🔮"},
+      {cat:"Logique avancée",q:"Plus tu m'enlèves, plus je grossis. Qui suis-je ?",r:"Un trou !",e:"🕳️"},
+      {cat:"Logique avancée",q:"Je parle toutes les langues du monde mais je n'ai pas de bouche. Qui suis-je ?",r:"Un écho !",e:"🏔️"},
+      {cat:"Logique avancée",q:"Je suis plein de trous, mais je retiens l'eau. Qu'est-ce que je suis ?",r:"Une éponge !",e:"🧽"},
+      {cat:"Logique avancée",q:"Je suis léger comme une plume, mais même le plus fort ne peut me tenir plus de 5 minutes. Qu'est-ce que je suis ?",r:"Son souffle !",e:"💨"},
+      {cat:"Logique avancée",q:"Je grandis par le bas et je diminue par le haut. Qu'est-ce que je suis ?",r:"Une bougie !",e:"🕯️"},
+      {cat:"Logique avancée",q:"Plus tu m'études, moins tu en sais. Qu'est-ce que je suis ?",r:"L'infini — l'univers !",e:"♾️"},
+      {cat:"Logique avancée",q:"On me jette quand on en a besoin, et on me reprend quand on n'en a plus besoin. Qu'est-ce que je suis ?",r:"Une ancre !",e:"⚓"},
+      {cat:"Logique avancée",q:"Je voyage partout dans le monde sans jamais bouger. Qu'est-ce que je suis ?",r:"Une carte géographique !",e:"🗺️"},
+      {cat:"Culture générale",q:"Quel est l'animal terrestre le plus rapide du monde ?",r:"Le guépard — jusqu'à 110 km/h !",e:"🐆"},
+      {cat:"Culture générale",q:"Combien de côtés a un hexagone ?",r:"6 côtés !",e:"⬡"},
+      {cat:"Culture générale",q:"Quel est le plus grand océan du monde ?",r:"L'océan Pacifique !",e:"🌊"},
+      {cat:"Culture générale",q:"Combien de continents y a-t-il sur la Terre ?",r:"7 continents !",e:"🌍"},
+      {cat:"Culture générale",q:"Quelle est la montagne la plus haute du monde ?",r:"L'Everest — 8 849 mètres !",e:"🏔️"},
+      {cat:"Culture générale",q:"Dans quel pays a été inventée la pizza ?",r:"En Italie !",e:"🍕"},
+      {cat:"Culture générale",q:"Combien de joueurs y a-t-il dans une équipe de hockey sur glace ?",r:"6 joueurs sur la glace !",e:"🏒"},
+    ]
+  }
+};
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let currentAge = "4-5";
+let queue = [];
+let idx = 0;
+let phase = "idle"; // idle | intro | thinking | reveal
+let timeLeft = 10;
+let score = 0;
+let sessionRight = 0;
+let answered = false;
+let timerInterval = null;
+let catFilter = null;
+const CIRCUM = 2 * Math.PI * 38;
+
+const ENCOURS = [
+  "Bravo champion ! T'es incroyable !",
+  "Wow, super travail ! Continue !",
+  "Tu es une vraie étoile !",
+  "Fantastique ! Continue comme ça !",
+  "Excellent ! T'es trop fort !",
+  "Bravo ! Tu es brillant ou brillante !",
+];
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+function init() {
+  // Build bubbles
+  const bw = document.getElementById('bubbles');
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 80 + 30;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;
+      animation-duration:${Math.random()*20+15}s;animation-delay:${Math.random()*15}s`;
+    bw.appendChild(b);
+  }
+  // Build age buttons
+  const grid = document.getElementById('age-grid');
+  Object.entries(LIBRARY).forEach(([key, g]) => {
+    const btn = document.createElement('button');
+    btn.className = 'age-btn';
+    btn.innerHTML = `<span class="big-emoji">${g.emoji}</span>
+      <span class="age-label">${g.label}</span>
+      <span class="age-count">${g.devinettes.length} devinettes</span>`;
+    btn.onclick = () => startAge(key);
+    grid.appendChild(btn);
+  });
+  // Load voices
+  window.speechSynthesis && speechSynthesis.getVoices();
+  window.speechSynthesis && speechSynthesis.addEventListener('voiceschanged', () => speechSynthesis.getVoices());
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function startAge(key) {
+  currentAge = key;
+  catFilter = null;
+  score = 0; sessionRight = 0;
+  buildQueue();
+  showPlayer();
+}
+
+function goHome() {
+  speechSynthesis.cancel();
+  clearInterval(timerInterval);
+  document.getElementById('screen-home').style.display = 'flex';
+  document.getElementById('screen-player').style.display = 'none';
+}
+
+function showPlayer() {
+  document.getElementById('screen-home').style.display = 'none';
+  document.getElementById('screen-player').style.display = 'flex';
+  const g = LIBRARY[currentAge];
+  document.getElementById('hdr-emoji').textContent = g.emoji;
+  document.getElementById('hdr-label').textContent = g.label;
+  buildCatChips();
+  renderIdle();
+}
+
+// ══════════════════════════════════════════
+//  QUEUE
+// ══════════════════════════════════════════
+function buildQueue() {
+  let pool = [...LIBRARY[currentAge].devinettes];
+  if (catFilter) pool = pool.filter(d => d.cat === catFilter);
+  queue = pool.sort(() => Math.random() - 0.5);
+  idx = 0; phase = "idle"; answered = false;
+  renderIdle();
+}
+
+function buildCatChips() {
+  const row = document.getElementById('cat-row');
+  row.innerHTML = '';
+  const cats = [...new Set(LIBRARY[currentAge].devinettes.map(d => d.cat))];
+  const allBtn = makeChip('🎲 Tout', null);
+  row.appendChild(allBtn);
+  cats.forEach(c => row.appendChild(makeChip(c, c)));
+}
+
+function makeChip(label, val) {
+  const btn = document.createElement('button');
+  btn.className = 'cat-chip' + (catFilter === val ? ' active' : '');
+  btn.textContent = label;
+  btn.onclick = () => {
+    catFilter = val;
+    speechSynthesis.cancel();
+    clearInterval(timerInterval);
+    buildQueue();
+    document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  };
+  return btn;
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function renderIdle() {
+  phase = "idle";
+  answered = false;
+  const q = queue[idx];
+  if (!q) return;
+  // Update progress
+  const pct = (idx / queue.length) * 100;
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-text').textContent = `${idx+1}/${queue.length}`;
+  document.getElementById('score-display').textContent = score;
+  // Emoji & cat
+  document.getElementById('q-emoji').textContent = q.e;
+  document.getElementById('q-cat').textContent = q.cat;
+  // Show idle text
+  show('q-idle'); hide('q-text');
+  hide('timer-wrap'); hide('dots-wrap'); hide('answer-box'); hide('answer-bonus');
+  // Stats
+  if (score > 0) {
+    show('stats-mini');
+    document.getElementById('stat-right').textContent = sessionRight;
+    document.getElementById('stat-pts').textContent = score;
+  } else { hide('stats-mini'); }
+  // Buttons
+  document.getElementById('btn-area').innerHTML =
+    `<button class="btn-play" onclick="startDevinette()">▶ Jouer la devinette</button>`;
+}
+
+function startDevinette() {
+  const q = queue[idx];
+  phase = "intro";
+  answered = false;
+  hide('q-idle'); show('q-text');
+  document.getElementById('q-text').textContent = q.q;
+  hide('timer-wrap'); hide('answer-box'); hide('stats-mini');
+  show('dots-wrap');
+  document.getElementById('btn-area').innerHTML = '';
+  speak(`Devinette numéro ${idx+1}… ${q.q}`, () => {
+    hide('dots-wrap');
+    startTimer();
+  });
+}
+
+function startTimer() {
+  phase = "thinking";
+  timeLeft = 10;
+  show('timer-wrap');
+  updateTimerUI();
+  document.getElementById('btn-area').innerHTML =
+    `<button class="btn-reveal" onclick="revealAnswer()">Afficher la réponse →</button>`;
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) { clearInterval(timerInterval); revealAnswer(); }
+    else updateTimerUI();
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const pct = timeLeft / 10;
+  const fill = pct * CIRCUM;
+  const color = pct > 0.6 ? '#FF6B9D' : pct > 0.3 ? '#F7B731' : '#FC5C65';
+  const ring = document.getElementById('timer-ring');
+  ring.style.strokeDasharray = `${fill} ${CIRCUM}`;
+  ring.style.stroke = color;
+  document.getElementById('timer-number').textContent = timeLeft;
+  document.getElementById('timer-number').style.color = color;
+}
+
+function revealAnswer() {
+  clearInterval(timerInterval);
+  phase = "reveal";
+  const q = queue[idx];
+  hide('timer-wrap');
+  show('answer-box');
+  document.getElementById('answer-text').textContent = q.r;
+  hide('answer-bonus');
+  document.getElementById('btn-area').innerHTML = `
+    <div class="btn-row">
+      <button class="btn-got" onclick="gotIt()">✅ J'avais trouvé ! +10</button>
+      <button class="btn-next-sm" onclick="nextQ()">→</button>
+    </div>`;
+  speak(`La réponse est… ${q.r}. ${randEnc()}`);
+}
+
+function gotIt() {
+  score += 10; sessionRight++;
+  answered = true;
+  document.getElementById('score-display').textContent = score;
+  show('answer-bonus');
+  document.getElementById('btn-area').innerHTML =
+    `<button class="btn-next" onclick="nextQ()">Prochaine devinette →</button>`;
+  confetti();
+}
+
+function nextQ() {
+  clearInterval(timerInterval);
+  speechSynthesis.cancel();
+  idx++;
+  if (idx >= queue.length) {
+    idx = 0;
+    queue = [...queue].sort(() => Math.random() - 0.5);
+  }
+  renderIdle();
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
+function randEnc() { return ENCOURS[Math.floor(Math.random() * ENCOURS.length)]; }
+
+function speak(text, onEnd) {
+  if (!window.speechSynthesis) { onEnd && onEnd(); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-CA'; u.rate = 0.87; u.pitch = 1.1;
+  const voices = speechSynthesis.getVoices();
+  const fr = voices.find(v => v.lang && v.lang.startsWith('fr'));
+  if (fr) u.voice = fr;
+  if (onEnd) u.onend = onEnd;
+  // Fallback: some browsers delay onend
+  if (onEnd) u.onerror = onEnd;
+  speechSynthesis.speak(u);
+  // Fallback timer if TTS not available
+  if (!fr && onEnd) setTimeout(onEnd, text.length * 60 + 800);
+}
+
+function confetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  wrap.classList.remove('hidden');
+  const colors = ['#FF6B9D','#FFB3D1','#F7B731','#26C99E','#7C6AF7','#FF9A3C'];
+  for (let i = 0; i < 38; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${-10 + Math.random()*20}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${Math.random()*10+5}px; height:${Math.random()*10+5}px;
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation-duration:${Math.random()*1.2+1.2}s;
+      animation-delay:${Math.random()*0.4}s`;
+    wrap.appendChild(p);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; wrap.classList.add('hidden'); }, 2500);
+}
+
+// ══════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
